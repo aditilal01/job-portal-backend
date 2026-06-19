@@ -1,0 +1,41 @@
+package com.jobportal.controller;
+
+import com.jobportal.dto.response.ApiResponse;
+import com.jobportal.dto.response.UserResponse;
+import com.jobportal.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+import java.util.UUID;
+
+@RestController
+@RequestMapping("/api/admin")
+@Tag(name = "Admin", description = "Admin-only endpoints for platform management")
+public class UserController {
+
+    private final UserService userService;
+
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
+
+    @GetMapping("/users")
+    @Operation(summary = "Get all users", description = "Admin endpoint to list all registered users")
+    public ResponseEntity<ApiResponse<List<UserResponse>>> getAllUsers() {
+        List<UserResponse> users = userService.getAllUsers();
+        return ResponseEntity.ok(ApiResponse.success(users));
+    }
+
+    @GetMapping("/users/{id}")
+    @Operation(summary = "Get user by ID", description = "Admin endpoint to view a specific user")
+    public ResponseEntity<ApiResponse<UserResponse>> getUserById(@PathVariable UUID id) {
+        UserResponse user = userService.getUserById(id);
+        return ResponseEntity.ok(ApiResponse.success(user));
+    }
+}
