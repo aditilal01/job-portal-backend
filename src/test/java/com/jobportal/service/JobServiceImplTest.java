@@ -215,7 +215,7 @@ class JobServiceImplTest {
 
             when(jobRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(jobPage);
 
-            Page<JobResponse> result = jobService.searchJobs("Java", "Bangalore", 5, pageable);
+            Page<JobResponse> result = jobService.searchJobs(null, "Java", "Bangalore", 5, pageable);
 
             assertThat(result).isNotNull();
             assertThat(result.getContent()).hasSize(1);
@@ -232,7 +232,7 @@ class JobServiceImplTest {
 
             when(jobRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(jobPage);
 
-            Page<JobResponse> result = jobService.searchJobs(null, null, null, pageable);
+            Page<JobResponse> result = jobService.searchJobs(null, null, null, null, pageable);
 
             assertThat(result).isNotNull();
             assertThat(result.getContent()).hasSize(1);
