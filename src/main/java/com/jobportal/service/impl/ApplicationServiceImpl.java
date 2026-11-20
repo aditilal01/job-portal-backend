@@ -31,14 +31,14 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final ApplicationRepository applicationRepository;
     private final JobRepository jobRepository;
     private final UserRepository userRepository;
-    private final Path uploadRoot;
+    private String uploadDir;
 
     public ApplicationServiceImpl(ApplicationRepository applicationRepository, JobRepository jobRepository,
             UserRepository userRepository, @Value("${app.file.upload-dir}") String uploadDir) {
         this.applicationRepository = applicationRepository;
         this.jobRepository = jobRepository;
         this.userRepository = userRepository;
-        this.uploadRoot = Paths.get(uploadDir).toAbsolutePath().normalize();
+        this.uploadDir = uploadDir;
     }
 
     @Override
@@ -118,6 +118,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         if (application.getResumeUrl() == null || application.getResumeUrl().isBlank()) {
             throw new ResourceNotFoundException("Resume", "applicationId", applicationId);
         }
+        Path uploadRoot = Paths.get(uploadDir).toAbsolutePath().normalize();
         Path path = uploadRoot.resolve(application.getResumeUrl()).normalize();
         if (!path.startsWith(uploadRoot) || !Files.isRegularFile(path)) {
             throw new ResourceNotFoundException("Resume", "applicationId", applicationId);
@@ -147,6 +148,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         if (!validType) throw new IllegalArgumentException("Resume file type does not match its extension");
         String filename = UUID.randomUUID() + "." + extension;
         try {
+            Path uploadRoot = Paths.get(uploadDir).toAbsolutePath().normalize();
             Files.createDirectories(uploadRoot);
             Path destination = uploadRoot.resolve(filename).normalize();
             if (!destination.startsWith(uploadRoot)) throw new IllegalArgumentException("Invalid resume filename");
