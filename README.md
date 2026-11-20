@@ -126,6 +126,28 @@ mvn test -s settings.xml
 
 ---
 
+## 🐳 Run with Docker Compose
+
+Prerequisites: Docker Desktop (or Docker Engine + Compose plugin).
+
+1. Copy the environment template and edit the values:
+   ```bash
+   cp .env.example .env
+   ```
+2. Set strong values for `DB_PASSWORD` and `JWT_SECRET`. Generate a JWT secret with:
+   ```bash
+   openssl rand -base64 48
+   ```
+3. Start PostgreSQL and the Spring Boot API:
+   ```bash
+   docker compose up --build -d
+   ```
+4. Open Swagger UI at [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html).
+
+To inspect logs: `docker compose logs -f backend`. To stop: `docker compose down`. To stop and delete the database/uploads volumes as well: `docker compose down -v` (this permanently deletes persisted data).
+
+Uploaded resumes and PostgreSQL data are stored in Docker-managed volumes. Keep the local `.env` file private; it is excluded from Git.
+
 ## 📝 API Endpoints & Authorization
 
 All endpoints except authentication are prefix-protected and require the header `Authorization: Bearer <token>`.
