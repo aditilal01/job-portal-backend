@@ -39,6 +39,9 @@ com.jobportal
 
 ---
 
+### Job search filters
+The public `GET /api/jobs` endpoint supports independent optional `title`, `skill`, `location`, and `experience` filters alongside pagination and sorting. Title, skill/keyword, and location matching are case-insensitive partial matches; experience is a maximum required-years filter. Sort fields are allowlisted (`createdAt`, `title`, `location`, `experienceRequired`) and direction accepts `asc` or `desc`.
+
 ## Candidate features
 
 ### Saved jobs
