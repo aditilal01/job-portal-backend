@@ -40,6 +40,8 @@ public class CandidateProfileRequest {
     @Pattern(regexp = "^(https?://.*)?$", message = "LinkedIn URL must start with http:// or https://")
     private String linkedInUrl;
 
+    private boolean profileVisibleToRecruiters;
+
     @Size(max = 500, message = "GitHub URL must not exceed 500 characters")
     @Pattern(regexp = "^(https?://.*)?$", message = "GitHub URL must start with http:// or https://")
     private String githubUrl;
