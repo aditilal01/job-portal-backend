@@ -7,6 +7,7 @@ import com.jobportal.entity.Job;
 import com.jobportal.entity.User;
 import com.jobportal.exception.*;
 import com.jobportal.repository.ApplicationRepository;
+import com.jobportal.repository.CandidateProfileRepository;
 import com.jobportal.repository.JobRepository;
 import com.jobportal.repository.UserRepository;
 import com.jobportal.service.ApplicationService;
@@ -29,15 +30,18 @@ public class ApplicationServiceImpl implements ApplicationService {
     private static final Logger log = LoggerFactory.getLogger(ApplicationServiceImpl.class);
     private static final long MAX_RESUME_BYTES = 10L * 1024 * 1024;
     private final ApplicationRepository applicationRepository;
+    private final CandidateProfileRepository candidateProfileRepository;
     private final JobRepository jobRepository;
     private final UserRepository userRepository;
     private String uploadDir;
 
     public ApplicationServiceImpl(ApplicationRepository applicationRepository, JobRepository jobRepository,
-            UserRepository userRepository, @Value("${app.file.upload-dir}") String uploadDir) {
+            UserRepository userRepository, CandidateProfileRepository candidateProfileRepository,
+            @Value("${app.file.upload-dir}") String uploadDir) {
         this.applicationRepository = applicationRepository;
         this.jobRepository = jobRepository;
         this.userRepository = userRepository;
+        this.candidateProfileRepository = candidateProfileRepository;
         this.uploadDir = uploadDir;
     }
 
@@ -60,7 +64,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         Application application = Application.builder().job(job).candidate(candidate)
                 .resumeUrl(storedResume).status(ApplicationStatus.APPLIED).build();
         application = applicationRepository.save(application);
-        return mapToResponse(application);
+        return mapToResponse(application, false);
     }
 
     @Override
@@ -83,14 +87,14 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
         application.setStatus(target);
         log.info("Application {} status updated: {} -> {}", applicationId, current, target);
-        return mapToResponse(applicationRepository.save(application));
+        return mapToResponse(applicationRepository.save(application), true);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<ApplicationResponse> getCandidateApplications(UUID candidateId) {
         return applicationRepository.findByCandidateIdOrderByAppliedAtDesc(candidateId)
-                .stream().map(this::mapToResponse).collect(Collectors.toList());
+                .stream().map(application -> mapToResponse(application, false)).collect(Collectors.toList());
     }
 
     @Override
@@ -102,7 +106,7 @@ public class ApplicationServiceImpl implements ApplicationService {
             throw new UnauthorizedActionException("You are not authorized to view applicants for this job");
         }
         return applicationRepository.findByJobIdOrderByAppliedAtDesc(jobId)
-                .stream().map(this::mapToResponse).collect(Collectors.toList());
+                .stream().map(application -> mapToResponse(application, true)).collect(Collectors.toList());
     }
 
     @Override
@@ -162,13 +166,25 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
     }
 
-    private ApplicationResponse mapToResponse(Application application) {
+    private ApplicationResponse mapToResponse(Application application, boolean includeCandidateProfile) {
         String resumeUrl = application.getResumeUrl() == null ? null
                 : "/api/applications/" + application.getId() + "/resume";
+        CandidateProfileSummaryResponse candidateProfile = null;
+        if (includeCandidateProfile) {
+            candidateProfile = candidateProfileRepository.findByUser_Id(application.getCandidate().getId())
+                    .filter(com.jobportal.entity.CandidateProfile::isProfileVisibleToRecruiters)
+                    .map(profile -> CandidateProfileSummaryResponse.builder()
+                            .headline(profile.getHeadline()).location(profile.getLocation())
+                            .summary(profile.getSummary()).skills(profile.getSkills())
+                            .education(profile.getEducation()).experience(profile.getExperience())
+                            .portfolioUrl(profile.getPortfolioUrl()).linkedInUrl(profile.getLinkedInUrl())
+                            .githubUrl(profile.getGithubUrl()).build())
+                    .orElse(null);
+        }
         return ApplicationResponse.builder().id(application.getId()).jobId(application.getJob().getId())
                 .jobTitle(application.getJob().getTitle()).candidateId(application.getCandidate().getId())
                 .candidateName(application.getCandidate().getName()).candidateEmail(application.getCandidate().getEmail())
-                .resumeUrl(resumeUrl).status(application.getStatus().name()).appliedAt(application.getAppliedAt())
+                .candidateProfile(candidateProfile).resumeUrl(resumeUrl).status(application.getStatus().name()).appliedAt(application.getAppliedAt())
                 .updatedAt(application.getUpdatedAt()).build();
     }
 }
