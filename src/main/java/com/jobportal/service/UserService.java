@@ -1,6 +1,7 @@
 package com.jobportal.service;
 
 import com.jobportal.dto.response.UserResponse;
+import com.jobportal.dto.response.AdminStatsResponse;
 
 import java.util.List;
 import java.util.UUID;
@@ -21,4 +22,5 @@ public interface UserService {
      * @return user response
      */
     UserResponse getUserById(UUID userId);
+    AdminStatsResponse getAdminStats();
 }
