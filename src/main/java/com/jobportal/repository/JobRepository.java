@@ -14,4 +14,6 @@ public interface JobRepository extends JpaRepository<Job, UUID>, JpaSpecificatio
     List<Job> findByPostedByIdOrderByCreatedAtDesc(UUID recruiterId);
 
     List<Job> findByIsActiveTrueOrderByCreatedAtDesc();
+
+    long countByIsActiveTrue();
 }
