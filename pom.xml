@@ -55,6 +55,18 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- Apache Tika: extract text from PDF, DOC, and DOCX resumes -->
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-core</artifactId>
+            <version>2.9.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-parsers-standard-package</artifactId>
+            <version>2.9.2</version>
+        </dependency>
+
         <!-- H2 for testing -->
         <dependency>
             <groupId>com.h2database</groupId>
