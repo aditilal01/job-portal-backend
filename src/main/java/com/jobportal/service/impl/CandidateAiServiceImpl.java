@@ -78,7 +78,10 @@ public class CandidateAiServiceImpl implements CandidateAiService {
         String extracted;
         try (InputStream input = file.getInputStream()) {
             String detected = tika.detect(input, originalName);
-            if (!ALLOWED_TYPES.contains(detected)) throw new IllegalArgumentException("The uploaded file does not appear to be a supported resume document.");
+            boolean supported = "application/pdf".equals(detected)
+                    || detected.contains("wordprocessingml") || "application/msword".equals(detected)
+                    || "application/x-tika-msoffice".equals(detected);
+            if (!supported) throw new IllegalArgumentException("The uploaded file does not appear to be a supported resume document.");
             try (InputStream parseInput = file.getInputStream()) {
                 extracted = tika.parseToString(parseInput);
             }
@@ -97,7 +100,9 @@ public class CandidateAiServiceImpl implements CandidateAiService {
             Files.createDirectories(root);
             Path target = root.resolve(storedName).normalize();
             if (!target.startsWith(root)) throw new IllegalArgumentException("Invalid resume filename.");
-            Files.copy(file.getInputStream(), target);
+            try (InputStream storedInput = file.getInputStream()) {
+                Files.copy(storedInput, target);
+            }
         } catch (Exception ex) {
             log.error("Could not store candidate AI resume", ex);
             throw new IllegalStateException("Resume upload could not be saved.");
@@ -139,9 +144,9 @@ public class CandidateAiServiceImpl implements CandidateAiService {
 
         StringBuilder promptData = new StringBuilder("CANDIDATE RESUME:\\n")
                 .append(resume.getExtractedText()).append("\\n\\nACTIVE JOBS:\\n");
-        for (Job job : jobs.stream().limit(40).toList()) {
+        for (Job job : jobs.stream().limit(20).toList()) {
             promptData.append("JOB_ID: ").append(job.getId()).append("\\nTITLE: ").append(job.getTitle())
-                    .append("\\nDESCRIPTION: ").append(job.getDescription())
+                    .append("\\nDESCRIPTION: ").append(job.getDescription().substring(0, Math.min(job.getDescription().length(), 2500)))
                     .append("\\nREQUIRED SKILLS: ").append(job.getRequiredSkills())
                     .append("\\nEXPERIENCE REQUIRED: ").append(job.getExperienceRequired())
                     .append("\\n---\\n");
