@@ -27,7 +27,7 @@ public class CandidateProfileServiceImpl implements CandidateProfileService {
     @Transactional(readOnly = true)
     public CandidateProfileResponse getProfile(UUID candidateId) {
         User candidate = getCandidate(candidateId);
-        return profileRepository.findByUserId(candidateId)
+        return profileRepository.findByUser_Id(candidateId)
                 .map(this::toResponse)
                 .orElseGet(() -> CandidateProfileResponse.builder()
                         .userId(candidate.getId())
@@ -40,7 +40,7 @@ public class CandidateProfileServiceImpl implements CandidateProfileService {
     @Transactional
     public CandidateProfileResponse updateProfile(UUID candidateId, CandidateProfileRequest request) {
         User candidate = getCandidate(candidateId);
-        CandidateProfile profile = profileRepository.findByUserId(candidateId)
+        CandidateProfile profile = profileRepository.findByUser_Id(candidateId)
                 .orElseGet(() -> CandidateProfile.builder().user(candidate).build());
 
         profile.setHeadline(clean(request.getHeadline()));
