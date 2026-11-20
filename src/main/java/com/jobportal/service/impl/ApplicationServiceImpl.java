@@ -1,6 +1,7 @@
 package com.jobportal.service.impl;
 
 import com.jobportal.dto.response.ApplicationResponse;
+import com.jobportal.dto.response.CandidateProfileSummaryResponse;
 import com.jobportal.entity.Application;
 import com.jobportal.entity.ApplicationStatus;
 import com.jobportal.entity.Job;
