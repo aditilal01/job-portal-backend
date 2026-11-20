@@ -1,6 +1,8 @@
+
 package com.jobportal.config;
 
 import com.jobportal.security.JwtAuthenticationFilter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -33,22 +35,42 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    // Read allowed frontend origins from application configuration.
+    @Value("${app.cors.allowed-origins:http://localhost:3000,http://localhost:5173}")
+    private String allowedOrigins;
+
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(AbstractHttpConfigurer::disable)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        // Public endpoints
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/jobs", "/api/jobs/**").permitAll()
 
-                        // Swagger / OpenAPI
+        http
+                // Disable CSRF because authentication is stateless and uses JWT.
+                .csrf(AbstractHttpConfigurer::disable)
+
+                // Configure CORS.
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
+                // Prevent server-side HTTP session creation.
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+
+                // Role-based authorization.
+                .authorizeHttpRequests(auth -> auth
+
+                        // Public authentication endpoints.
+                        .requestMatchers("/api/auth/**").permitAll()
+
+                        // Public job browsing.
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/jobs",
+                                "/api/jobs/**"
+                        ).permitAll()
+
+                        // Swagger / OpenAPI endpoints.
                         .requestMatchers(
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
@@ -56,31 +78,55 @@ public class SecurityConfig {
                                 "/v3/api-docs"
                         ).permitAll()
 
-                        // Recruiter endpoints
-                        .requestMatchers(HttpMethod.POST, "/api/jobs").hasRole("RECRUITER")
-                        .requestMatchers(HttpMethod.PUT, "/api/jobs/**").hasRole("RECRUITER")
-                        .requestMatchers(HttpMethod.DELETE, "/api/jobs/**").hasRole("RECRUITER")
-                        .requestMatchers("/api/recruiter/**").hasRole("RECRUITER")
-                        .requestMatchers(HttpMethod.PATCH, "/api/applications/*/status").hasRole("RECRUITER")
-                        .requestMatchers(HttpMethod.GET, "/api/applications/job/**").hasRole("RECRUITER")
+                        // Recruiter endpoints.
+                        .requestMatchers(HttpMethod.POST, "/api/jobs")
+                        .hasRole("RECRUITER")
 
-                        // Candidate endpoints
-                        .requestMatchers(HttpMethod.POST, "/api/applications").hasRole("CANDIDATE")
-                        .requestMatchers("/api/applications/my").hasRole("CANDIDATE")
+                        .requestMatchers(HttpMethod.PUT, "/api/jobs/**")
+                        .hasRole("RECRUITER")
 
-                        // Admin endpoints
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/jobs/**")
+                        .hasRole("RECRUITER")
 
-                        // Everything else requires authentication
+                        .requestMatchers("/api/recruiter/**")
+                        .hasRole("RECRUITER")
+
+                        .requestMatchers(HttpMethod.PATCH,
+                                "/api/applications/*/status"
+                        ).hasRole("RECRUITER")
+
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/applications/job/**"
+                        ).hasRole("RECRUITER")
+
+                        // Candidate endpoints.
+                        .requestMatchers(HttpMethod.POST, "/api/applications")
+                        .hasRole("CANDIDATE")
+
+                        .requestMatchers("/api/applications/my")
+                        .hasRole("CANDIDATE")
+
+                        // Admin endpoints.
+                        .requestMatchers("/api/admin/**")
+                        .hasRole("ADMIN")
+
+                        // All remaining endpoints require authentication.
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+                // Execute JWT authentication before username/password authentication.
+                .addFilterBefore(
+                        jwtAuthenticationFilter,
+                        UsernamePasswordAuthenticationFilter.class
+                );
 
         return http.build();
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration authConfig
+    ) throws Exception {
         return authConfig.getAuthenticationManager();
     }
 
@@ -89,17 +135,47 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+    /**
+     * Configurable CORS configuration.
+     * Origins are supplied through application.yml or environment variables.
+     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
+
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:5173"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
+
+        // Convert comma-separated origins into a list.
+        List<String> origins = Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .filter(origin -> !origin.isEmpty())
+                .toList();
+
+        configuration.setAllowedOrigins(origins);
+
+        configuration.setAllowedMethods(List.of(
+                "GET",
+                "POST",
+                "PUT",
+                "PATCH",
+                "DELETE",
+                "OPTIONS"
+        ));
+
+        configuration.setAllowedHeaders(List.of(
+                "Authorization",
+                "Content-Type",
+                "Accept"
+        ));
+
         configuration.setAllowCredentials(true);
+
         configuration.setMaxAge(3600L);
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
+
         source.registerCorsConfiguration("/**", configuration);
+
         return source;
     }
 }
