@@ -2,6 +2,7 @@ package com.jobportal.controller;
 
 import com.jobportal.dto.response.ApiResponse;
 import com.jobportal.dto.response.UserResponse;
+import com.jobportal.dto.response.AdminStatsResponse;
 import com.jobportal.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -19,6 +20,12 @@ public class UserController {
 
     public UserController(UserService userService) {
         this.userService = userService;
+    }
+
+    @GetMapping("/stats")
+    @Operation(summary = "Get platform-wide administration statistics")
+    public ResponseEntity<ApiResponse<AdminStatsResponse>> getAdminStats() {
+        return ResponseEntity.ok(ApiResponse.success(userService.getAdminStats()));
     }
 
     @GetMapping("/users")
