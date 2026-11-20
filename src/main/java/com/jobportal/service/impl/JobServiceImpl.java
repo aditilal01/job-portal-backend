@@ -95,8 +95,9 @@ public class JobServiceImpl implements JobService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<JobResponse> searchJobs(String skill, String location, Integer experience, Pageable pageable) {
+    public Page<JobResponse> searchJobs(String title, String skill, String location, Integer experience, Pageable pageable) {
         Specification<Job> spec = Specification.where(JobSpecification.isActive());
+        if (title != null && !title.isBlank()) spec = spec.and(JobSpecification.hasTitle(title));
         if (skill != null && !skill.isBlank()) spec = spec.and(JobSpecification.hasSkill(skill));
         if (location != null && !location.isBlank()) spec = spec.and(JobSpecification.hasLocation(location));
         if (experience != null) spec = spec.and(JobSpecification.hasMaxExperience(experience));
