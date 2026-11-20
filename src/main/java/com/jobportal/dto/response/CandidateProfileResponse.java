@@ -28,5 +28,6 @@ public class CandidateProfileResponse {
     private String portfolioUrl;
     private String linkedInUrl;
     private String githubUrl;
+    private boolean profileVisibleToRecruiters;
     private LocalDateTime updatedAt;
 }
