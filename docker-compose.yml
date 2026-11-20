@@ -29,6 +29,8 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
       JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-86400000}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
       FILE_UPLOAD_DIR: /app/uploads/resumes
       MAX_FILE_SIZE: 10MB
