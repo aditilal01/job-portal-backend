@@ -7,6 +7,7 @@ import com.jobportal.exception.InvalidStatusTransitionException;
 import com.jobportal.exception.ResourceNotFoundException;
 import com.jobportal.exception.UnauthorizedActionException;
 import com.jobportal.repository.ApplicationRepository;
+import com.jobportal.repository.CandidateProfileRepository;
 import com.jobportal.repository.JobRepository;
 import com.jobportal.repository.UserRepository;
 import com.jobportal.service.impl.ApplicationServiceImpl;
@@ -38,6 +39,9 @@ class ApplicationServiceImplTest {
 
     @Mock
     private JobRepository jobRepository;
+
+    @Mock
+    private CandidateProfileRepository candidateProfileRepository;
 
     @Mock
     private UserRepository userRepository;
@@ -164,6 +168,7 @@ class ApplicationServiceImplTest {
             application.setStatus(ApplicationStatus.APPLIED);
             when(applicationRepository.findById(application.getId())).thenReturn(Optional.of(application));
             when(applicationRepository.save(any(Application.class))).thenReturn(application);
+            when(candidateProfileRepository.findByUser_Id(candidate.getId())).thenReturn(Optional.empty());
 
             ApplicationResponse response = applicationService.updateApplicationStatus(
                     application.getId(), "SHORTLISTED", recruiter.getId());
@@ -177,6 +182,7 @@ class ApplicationServiceImplTest {
             application.setStatus(ApplicationStatus.SHORTLISTED);
             when(applicationRepository.findById(application.getId())).thenReturn(Optional.of(application));
             when(applicationRepository.save(any(Application.class))).thenReturn(application);
+            when(candidateProfileRepository.findByUser_Id(candidate.getId())).thenReturn(Optional.empty());
 
             ApplicationResponse response = applicationService.updateApplicationStatus(
                     application.getId(), "INTERVIEW", recruiter.getId());
@@ -190,6 +196,7 @@ class ApplicationServiceImplTest {
             application.setStatus(ApplicationStatus.INTERVIEW);
             when(applicationRepository.findById(application.getId())).thenReturn(Optional.of(application));
             when(applicationRepository.save(any(Application.class))).thenReturn(application);
+            when(candidateProfileRepository.findByUser_Id(candidate.getId())).thenReturn(Optional.empty());
 
             ApplicationResponse response = applicationService.updateApplicationStatus(
                     application.getId(), "HIRED", recruiter.getId());
