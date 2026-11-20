@@ -39,6 +39,8 @@ public class ApplicationResponse {
     @Schema(description = "URL or path to the uploaded resume")
     private String resumeUrl;
 
+    private CandidateProfileSummaryResponse candidateProfile;
+
     @Schema(description = "Current application status")
     private String status;
 
