@@ -53,6 +53,10 @@ public class CandidateProfile {
     @Column(length = 500)
     private String githubUrl;
 
+    @Builder.Default
+    @Column(name = "profile_visible_to_recruiters", nullable = false, columnDefinition = "boolean default false")
+    private boolean profileVisibleToRecruiters = false;
+
     private LocalDateTime updatedAt;
 
     @PrePersist
