@@ -18,6 +18,8 @@ public interface ApplicationRepository extends JpaRepository<Application, UUID> 
 
     boolean existsByJobIdAndCandidateId(UUID jobId, UUID candidateId);
 
+    long count();
+
     @Query("SELECT COUNT(a) FROM Application a WHERE a.job.id = :jobId")
     long countByJobId(@Param("jobId") UUID jobId);
 
