@@ -15,6 +15,6 @@ public interface JobService {
     void deleteJob(UUID jobId, UUID recruiterId);
     JobResponse getJobById(UUID jobId);
     JobResponse getRecruiterJobById(UUID jobId, UUID recruiterId);
-    Page<JobResponse> searchJobs(String skill, String location, Integer experience, Pageable pageable);
+    Page<JobResponse> searchJobs(String title, String skill, String location, Integer experience, Pageable pageable);
     List<RecruiterDashboardResponse> getRecruiterDashboard(UUID recruiterId);
 }
