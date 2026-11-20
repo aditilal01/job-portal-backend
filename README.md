@@ -340,3 +340,11 @@ Common status codes returned by the Global Exception Handler:
 - `403 Forbidden`: Role check failures (e.g. Candidate posting a job) or ownership checks (e.g. Recruiter modifying another's job).
 - `404 Not Found`: Resource (User, Job, or Application) does not exist.
 - `409 Conflict`: Candidate trying to apply to the same job multiple times.
+
+
+## 🤖 AI Career Tools
+
+Candidate AI endpoints use OpenAI Chat Completions (default model: `gpt-4o-mini`). Configure `OPENAI_API_KEY` in the backend's private `.env` file. Never put this key in the frontend or commit it to Git. Resume text is extracted with Apache Tika, stored for the signed-in candidate, and sent to the configured AI provider for analysis and job matching. Uploads are limited to 10 MB and PDF, DOC, or DOCX. AI match scores are advisory and must not be used as automatic hiring decisions.
+
+- `POST /api/candidate/ai/resume/analyze` — multipart field `resume`
+- `GET /api/candidate/ai/job-matches` — requires a previously analyzed resume
