@@ -53,6 +53,7 @@ public class CandidateProfileServiceImpl implements CandidateProfileService {
         profile.setPortfolioUrl(clean(request.getPortfolioUrl()));
         profile.setLinkedInUrl(clean(request.getLinkedInUrl()));
         profile.setGithubUrl(clean(request.getGithubUrl()));
+        profile.setProfileVisibleToRecruiters(request.isProfileVisibleToRecruiters());
 
         return toResponse(profileRepository.save(profile));
     }
@@ -87,6 +88,7 @@ public class CandidateProfileServiceImpl implements CandidateProfileService {
                 .portfolioUrl(profile.getPortfolioUrl())
                 .linkedInUrl(profile.getLinkedInUrl())
                 .githubUrl(profile.getGithubUrl())
+                .profileVisibleToRecruiters(profile.isProfileVisibleToRecruiters())
                 .updatedAt(profile.getUpdatedAt())
                 .build();
     }
