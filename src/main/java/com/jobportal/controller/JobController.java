@@ -23,12 +23,15 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api")
 @Tag(name = "Jobs", description = "Job posting CRUD and search endpoints")
 public class JobController {
+    private static final Set<String> ALLOWED_SORT_FIELDS =
+            Set.of("createdAt", "title", "location", "experienceRequired");
 
     private final JobService jobService;
     private final UserRepository userRepository;
@@ -39,78 +42,77 @@ public class JobController {
     }
 
     @PostMapping("/jobs")
-    @Operation(summary = "Create a job posting", description = "Recruiters can create a new job posting")
-    public ResponseEntity<ApiResponse<JobResponse>> createJob(
-            @Valid @RequestBody JobRequest request,
+    @Operation(summary = "Create a job posting")
+    public ResponseEntity<ApiResponse<JobResponse>> createJob(@Valid @RequestBody JobRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
-
-        UUID recruiterId = resolveUserId(userDetails);
-        JobResponse response = jobService.createJob(request, recruiterId);
+        JobResponse response = jobService.createJob(request, resolveUserId(userDetails));
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Job created successfully", response));
     }
 
     @PutMapping("/jobs/{id}")
-    @Operation(summary = "Update a job posting", description = "Recruiters can update their own job postings")
-    public ResponseEntity<ApiResponse<JobResponse>> updateJob(
-            @PathVariable UUID id,
-            @Valid @RequestBody JobRequest request,
-            @AuthenticationPrincipal UserDetails userDetails) {
-
-        UUID recruiterId = resolveUserId(userDetails);
-        JobResponse response = jobService.updateJob(id, request, recruiterId);
+    @Operation(summary = "Update a job posting")
+    public ResponseEntity<ApiResponse<JobResponse>> updateJob(@PathVariable UUID id,
+            @Valid @RequestBody JobRequest request, @AuthenticationPrincipal UserDetails userDetails) {
+        JobResponse response = jobService.updateJob(id, request, resolveUserId(userDetails));
         return ResponseEntity.ok(ApiResponse.success("Job updated successfully", response));
     }
 
     @DeleteMapping("/jobs/{id}")
-    @Operation(summary = "Delete a job posting", description = "Recruiters can soft-delete their own job postings")
-    public ResponseEntity<ApiResponse<Void>> deleteJob(
-            @PathVariable UUID id,
+    @Operation(summary = "Soft-delete a job posting")
+    public ResponseEntity<ApiResponse<Void>> deleteJob(@PathVariable UUID id,
             @AuthenticationPrincipal UserDetails userDetails) {
-
-        UUID recruiterId = resolveUserId(userDetails);
-        jobService.deleteJob(id, recruiterId);
+        jobService.deleteJob(id, resolveUserId(userDetails));
         return ResponseEntity.ok(ApiResponse.success("Job deleted successfully", null));
     }
 
     @GetMapping("/jobs/{id}")
-    @Operation(summary = "Get a job by ID", description = "Public endpoint to view a specific job posting")
+    @Operation(summary = "Get an active public job by ID")
     public ResponseEntity<ApiResponse<JobResponse>> getJobById(@PathVariable UUID id) {
-        JobResponse response = jobService.getJobById(id);
-        return ResponseEntity.ok(ApiResponse.success(response));
+        return ResponseEntity.ok(ApiResponse.success(jobService.getJobById(id)));
+    }
+
+    @GetMapping("/recruiter/jobs/{id}")
+    @Operation(summary = "Get one of the authenticated recruiter's jobs, including inactive jobs")
+    public ResponseEntity<ApiResponse<JobResponse>> getRecruiterJobById(@PathVariable UUID id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(ApiResponse.success(
+                jobService.getRecruiterJobById(id, resolveUserId(userDetails))));
     }
 
     @GetMapping("/jobs")
-    @Operation(summary = "Search jobs", description = "Public endpoint to search and filter active job postings with pagination")
+    @Operation(summary = "Search active jobs with pagination")
     public ResponseEntity<ApiResponse<Page<JobResponse>>> searchJobs(
             @Parameter(description = "Filter by skill") @RequestParam(required = false) String skill,
             @Parameter(description = "Filter by location") @RequestParam(required = false) String location,
-            @Parameter(description = "Filter by max experience required") @RequestParam(required = false) Integer experience,
-            @Parameter(description = "Page number (0-indexed)") @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size,
-            @Parameter(description = "Sort field") @RequestParam(defaultValue = "createdAt") String sortBy,
-            @Parameter(description = "Sort direction (asc/desc)") @RequestParam(defaultValue = "desc") String sortDir) {
-
+            @Parameter(description = "Maximum experience required") @RequestParam(required = false) Integer experience,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        if (page < 0) throw new IllegalArgumentException("Page index cannot be negative");
+        if (size < 1 || size > 100) throw new IllegalArgumentException("Page size must be between 1 and 100");
+        if (experience != null && experience < 0) throw new IllegalArgumentException("Experience cannot be negative");
+        if (!ALLOWED_SORT_FIELDS.contains(sortBy)) {
+            throw new IllegalArgumentException("Unsupported sort field. Allowed: " + ALLOWED_SORT_FIELDS);
+        }
+        if (!sortDir.equalsIgnoreCase("asc") && !sortDir.equalsIgnoreCase("desc")) {
+            throw new IllegalArgumentException("Sort direction must be 'asc' or 'desc'");
+        }
         Sort sort = sortDir.equalsIgnoreCase("asc")
-                ? Sort.by(sortBy).ascending()
-                : Sort.by(sortBy).descending();
-
+                ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<JobResponse> results = jobService.searchJobs(skill, location, experience, pageable);
         return ResponseEntity.ok(ApiResponse.success(results));
     }
 
     @GetMapping("/recruiter/dashboard")
-    @Operation(summary = "Recruiter dashboard", description = "Returns all jobs posted by the recruiter with applicant counts")
+    @Operation(summary = "Recruiter dashboard")
     public ResponseEntity<ApiResponse<List<RecruiterDashboardResponse>>> getRecruiterDashboard(
             @AuthenticationPrincipal UserDetails userDetails) {
-
-        UUID recruiterId = resolveUserId(userDetails);
-        List<RecruiterDashboardResponse> dashboard = jobService.getRecruiterDashboard(recruiterId);
+        List<RecruiterDashboardResponse> dashboard = jobService.getRecruiterDashboard(resolveUserId(userDetails));
         return ResponseEntity.ok(ApiResponse.success(dashboard));
     }
-
-    // ── Helper ──────────────────────────────────────────────────────────────
 
     private UUID resolveUserId(UserDetails userDetails) {
         User user = userRepository.findByEmail(userDetails.getUsername())
