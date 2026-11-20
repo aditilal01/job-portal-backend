@@ -83,7 +83,8 @@ public class JobController {
     @GetMapping("/jobs")
     @Operation(summary = "Search active jobs with pagination")
     public ResponseEntity<ApiResponse<Page<JobResponse>>> searchJobs(
-            @Parameter(description = "Filter by skill") @RequestParam(required = false) String skill,
+            @Parameter(description = "Filter by job title") @RequestParam(required = false) String title,
+            @Parameter(description = "Filter by skill or keyword") @RequestParam(required = false) String skill,
             @Parameter(description = "Filter by location") @RequestParam(required = false) String location,
             @Parameter(description = "Maximum experience required") @RequestParam(required = false) Integer experience,
             @RequestParam(defaultValue = "0") int page,
@@ -102,7 +103,7 @@ public class JobController {
         Sort sort = sortDir.equalsIgnoreCase("asc")
                 ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
-        Page<JobResponse> results = jobService.searchJobs(skill, location, experience, pageable);
+        Page<JobResponse> results = jobService.searchJobs(title, skill, location, experience, pageable);
         return ResponseEntity.ok(ApiResponse.success(results));
     }
 
