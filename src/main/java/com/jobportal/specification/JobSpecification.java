@@ -27,6 +27,12 @@ public final class JobSpecification {
         };
     }
 
+    /** Filters job titles independently from required skills. */
+    public static Specification<Job> hasTitle(String title) {
+        return (root, query, cb) ->
+                cb.like(cb.lower(root.get("title")), "%" + title.trim().toLowerCase() + "%");
+    }
+
     /**
      * Filters jobs whose location contains the given value (case-insensitive LIKE).
      */
