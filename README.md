@@ -101,14 +101,17 @@ erDiagram
 ### ⚙️ Database Configuration
 Create a database named `jobportal` in PostgreSQL. 
 
-Update the configuration parameters in `src/main/resources/application.yml` or set them as environment variables:
-```yaml
-spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/jobportal
-    username: your_username
-    password: your_password
+Set database credentials and a strong JWT signing secret through environment variables. `JWT_SECRET` is required and must be at least 32 bytes for HS256. Never commit production secrets.
+```bash
+DB_URL=jdbc:postgresql://localhost:5432/jobportal
+DB_USERNAME=your_username
+DB_PASSWORD=your_password
+JWT_SECRET=replace-with-a-random-secret-at-least-32-bytes-long
+CORS_ORIGINS=http://localhost:5173
+FILE_UPLOAD_DIR=./uploads/resumes
 ```
+
+The application also supports `SERVER_PORT`, `JWT_EXPIRATION_MS`, `MAX_FILE_SIZE`, `MAX_REQUEST_SIZE`, and `LOG_LEVEL`.
 
 ### 🌐 Special DNS / Offline Setup
 If your network environment restricts access to `repo.maven.apache.org` (causing DNS refusals), a custom `settings.xml` has been included in the project root to redirect dependencies through the `repo1.maven.org` mirror.
@@ -140,9 +143,10 @@ All endpoints except authentication are prefix-protected and require the header 
 | **GET** | `/api/applications/my` | `CANDIDATE` | View candidate's applications (dashboard) |
 | **GET** | `/api/applications/job/{jobId}` | `RECRUITER` (Owner) | View applicants for a specific job |
 | **PATCH**| `/api/applications/{id}/status` | `RECRUITER` (Owner) | Update application status with state-validation |
+| **GET** | `/api/applications/{id}/resume` | Candidate owner or job-owning recruiter | Download a resume through an authorized endpoint |
 | **GET** | `/api/recruiter/dashboard` | `RECRUITER` | Get recruiter dashboard stats (jobs + count) |
-| **GET** | `/api/users` | `ADMIN` | Get list of all users |
-| **GET** | `/api/users/{id}` | `ADMIN` or self | Get user profile details |
+| **GET** | `/api/users` or `/api/admin/users` | `ADMIN` | Get list of all users |
+| **GET** | `/api/users/{id}` or `/api/admin/users/{id}` | `ADMIN` | Get user profile details |
 
 ---
 
@@ -245,7 +249,7 @@ All endpoints except authentication are prefix-protected and require the header 
 **Content-Type**: `multipart/form-data`
 **Parts**:
 - `jobId`: `e9c20f18-6be0-449e-baef-c07a35368a12`
-- `resumeFile`: `<binary_file>` (PDF/DOCX format, max size 10MB)
+- `resume`: `<binary_file>` (PDF, DOC, or DOCX; max size 10MB)
 
 **Response Body (201 Created):**
 ```json
@@ -258,7 +262,7 @@ All endpoints except authentication are prefix-protected and require the header 
     "jobTitle": "Senior Java Developer",
     "candidateId": "d7b2783d-6bdf-4eb9-bf89-f538e1215bbf",
     "candidateName": "Jane Doe",
-    "resumeUrl": "/uploads/resumes/d7b2783d-6bdf-4eb9-bf89-f538e1215bbf_resume.pdf",
+    "resumeUrl": "/api/applications/3b2a1a8c-9c7b-4ea2-ab39-f9c98ba8b1c1/resume",
     "status": "APPLIED",
     "appliedAt": "2026-06-19T15:45:00"
   }
