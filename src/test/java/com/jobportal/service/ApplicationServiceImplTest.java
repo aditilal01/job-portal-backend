@@ -294,6 +294,7 @@ class ApplicationServiceImplTest {
             when(jobRepository.findById(job.getId())).thenReturn(Optional.of(job));
             when(applicationRepository.findByJobIdOrderByAppliedAtDesc(job.getId()))
                     .thenReturn(List.of(application));
+            when(candidateProfileRepository.findByUser_Id(candidate.getId())).thenReturn(Optional.empty());
 
             List<ApplicationResponse> responses = applicationService.getJobApplications(
                     job.getId(), recruiter.getId());
