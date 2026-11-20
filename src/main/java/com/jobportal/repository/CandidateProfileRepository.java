@@ -7,5 +7,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface CandidateProfileRepository extends JpaRepository<CandidateProfile, UUID> {
-    Optional<CandidateProfile> findByUserId(UUID userId);
+    /**
+     * Resolve the profile through the associated User primary key.
+     * The underscore makes the nested-property traversal explicit to Spring Data.
+     */
+    Optional<CandidateProfile> findByUser_Id(UUID userId);
 }
