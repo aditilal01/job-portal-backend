@@ -39,6 +39,19 @@ com.jobportal
 
 ---
 
+## Candidate features
+
+### Saved jobs
+Candidate-only endpoints (JWT required):
+- `POST /api/candidate/saved-jobs/{jobId}` — bookmark an active job. Repeating the request returns the existing bookmark.
+- `GET /api/candidate/saved-jobs` — list saved jobs, including jobs that have since become inactive.
+- `DELETE /api/candidate/saved-jobs/{jobId}` — remove a bookmark.
+
+The database enforces one bookmark per candidate/job pair.
+
+### Candidate profile visibility
+Candidates control recruiter access with the `profileVisibleToRecruiters` field on `PUT /api/candidate/profile`. It defaults to `false`. When enabled, recruiters who own a job application can see the candidate's professional summary, skills, education, experience, location and portfolio links in that application's response. Phone numbers are not included in the recruiter-facing profile summary. Candidate-owned application responses do not include this recruiter view.
+
 ## 💾 Database Schema
 
 The entity relationships are defined as follows:
