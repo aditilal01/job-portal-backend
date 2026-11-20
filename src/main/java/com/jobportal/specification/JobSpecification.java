@@ -5,7 +5,7 @@ import org.springframework.data.jpa.domain.Specification;
 
 /**
  * Dynamic query specifications for the Job entity.
- * Used with JpaSpecificationExecutor for filtering by skill, location, and experience level.
+ * Used with JpaSpecificationExecutor for filtering by title/skills, location, and experience.
  */
 public final class JobSpecification {
 
@@ -14,11 +14,17 @@ public final class JobSpecification {
     }
 
     /**
-     * Filters jobs whose requiredSkills column contains the given skill (case-insensitive LIKE).
+     * Searches job titles and required skills using a case-insensitive partial match.
+     * This makes the public search field labelled "Job title or skills" behave as advertised.
      */
-    public static Specification<Job> hasSkill(String skill) {
-        return (root, query, cb) ->
-                cb.like(cb.lower(root.get("requiredSkills")), "%" + skill.toLowerCase() + "%");
+    public static Specification<Job> hasSkill(String keyword) {
+        return (root, query, cb) -> {
+            String pattern = "%" + keyword.trim().toLowerCase() + "%";
+            return cb.or(
+                    cb.like(cb.lower(root.get("title")), pattern),
+                    cb.like(cb.lower(root.get("requiredSkills")), pattern)
+            );
+        };
     }
 
     /**
@@ -26,12 +32,11 @@ public final class JobSpecification {
      */
     public static Specification<Job> hasLocation(String location) {
         return (root, query, cb) ->
-                cb.like(cb.lower(root.get("location")), "%" + location.toLowerCase() + "%");
+                cb.like(cb.lower(root.get("location")), "%" + location.trim().toLowerCase() + "%");
     }
 
     /**
      * Filters jobs where the required experience is at most the given value.
-     * This finds jobs the candidate qualifies for based on their years of experience.
      */
     public static Specification<Job> hasMaxExperience(Integer experience) {
         return (root, query, cb) ->
