@@ -40,6 +40,15 @@ services:
     volumes:
       - resume_uploads:/app/uploads/resumes
 
+  frontend:
+    build: ../job-portal-frontend
+    container_name: jobportal-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+
 volumes:
   postgres_data:
   resume_uploads:
